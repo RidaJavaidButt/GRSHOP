@@ -14,12 +14,12 @@
 <div class="row">
     @foreach (var grocery in Model)
     {
-        <div id="GroceryContainer" class="col-lg-3 col-md-4 col-sm-1">
-            <img id="GroceryImage" src="@grocery.URL" alt="@grocery.URL" />
-            <span id="GroceryTitle">@grocery.Title</span>
-            <span id="GroceryPrice">Rs. Coming Soon</span>
-            <span id="GroceryQuantity"><input id="quantityInput" type="number" name="GroceryQuantity" value="" placeholder="0" /></span>
-            <span id="GroceryCartButton"><button id="btn"><span class="fa fa-shopping-cart"></span>Add to Cart</button></span>
-        </div>
+    <div id="GroceryContainer" class="col-lg-3 col-md-4 col-sm-1">
+        <img id="GroceryImage" src="@grocery.URL" alt="@grocery.URL" />
+        <span id="GroceryTitle">@grocery.Title</span>
+        <span id="GroceryPrice">Rs. Coming Soon</span>
+        <span id="GroceryQuantity"><input id="quantityInput" type="number" name="GroceryQuantity" value="" placeholder="0" /></span>
+        <span id="GroceryCartButton"><button id="btn"><span class="fa fa-shopping-cart"></span>Add to Cart</button></span>
+    </div>
     }
 </div>

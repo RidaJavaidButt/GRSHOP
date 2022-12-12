@@ -7,46 +7,26 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GRSHOP.Data;
 using GRSHOP.Models;
-using Microsoft.AspNetCore.Authorization;
 
 namespace GRSHOP.Controllers
 {
-    public class GroceriesController : Controller
+    public class OrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public GroceriesController(ApplicationDbContext context)
+        public OrdersController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Groceries
+        // GET: Orders
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Grocery.ToListAsync());
+            var applicationDbContext = _context.Order.Include(o => o.GroceryBrand).Include(o => o.User);
+            return View(await applicationDbContext.ToListAsync());
         }
 
-       
-
-        public IActionResult SearchForm()
-        {
-            return View();
-        }
-        public async Task<IActionResult> GroceryList()
-        {
-            return View(await _context.Grocery.ToListAsync());
-        }
-
-
-
-        public async Task<IActionResult> SearchResult(string Title)
-        {
-            return View("Index", await _context.Grocery.Where(a => a.Title.Contains(Title)).ToListAsync());
-        }
-
-        // GET: Groceries/Details/5
-
-
+        // GET: Orders/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -54,56 +34,45 @@ namespace GRSHOP.Controllers
                 return NotFound();
             }
 
-            var grocery = await _context.Grocery
+            var order = await _context.Order
+                .Include(o => o.GroceryBrand)
+                .Include(o => o.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (grocery == null)
+            if (order == null)
             {
                 return NotFound();
             }
 
-            return View(grocery);
+            return View(order);
         }
 
-        // GET: Groceries/Create
-
-        [Authorize]
+        // GET: Orders/Create
         public IActionResult Create()
         {
-            ViewData["StoreId"] = new SelectList(_context.Store, "id", "Name");
-            ViewData["BrandId"] = new SelectList(_context.Brand, "id", "Name");
+            ViewData["BrandId"] = new SelectList(_context.Brand, "Id", "Name");
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id");
             return View();
         }
 
-        // POST: Groceries/Create
+        // POST: Orders/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
-        public async Task<IActionResult> Create([Bind("Id,Title,URL,Price,BrandId,StoreId")] Grocery grocery, List<int> Brand)
+        public async Task<IActionResult> Create([Bind("Id,Quantity,Status,LastUpdated,UserId,BrandId")] Order order)
         {
             if (ModelState.IsValid)
             {
-                _context.Grocery.Add(grocery);
+                _context.Add(order);
                 await _context.SaveChangesAsync();
-                List<Brand> brands = new List<Brand>();
-                foreach (int brand in Brand)
-                {
-                    brands.Add(new Brand { Id = brand });
-
-                }
-                _context.Brand.AddRange(brands);
-                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
-
-            ViewData["StoreId"]= new SelectList(_context.Store, "id","id", grocery.StoreId);
-            return View(grocery);
+            ViewData["BrandId"] = new SelectList(_context.Brand, "Id", "Name", order.BrandId);
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
+            return View(order);
         }
-        
 
-        // GET: Groceries/Edit/5
-        [Authorize]
+        // GET: Orders/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -111,23 +80,24 @@ namespace GRSHOP.Controllers
                 return NotFound();
             }
 
-            var grocery = await _context.Grocery.FindAsync(id);
-            if (grocery == null)
+            var order = await _context.Order.FindAsync(id);
+            if (order == null)
             {
                 return NotFound();
             }
-            return View(grocery);
+            ViewData["BrandId"] = new SelectList(_context.Brand, "Id", "Name", order.BrandId);
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
+            return View(order);
         }
 
-        // POST: Groceries/Edit/5
+        // POST: Orders/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,URL,Price,BrandId,StoreId")] Grocery grocery)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Quantity,Status,LastUpdated,UserId,BrandId")] Order order)
         {
-            if (id != grocery.Id)
+            if (id != order.Id)
             {
                 return NotFound();
             }
@@ -136,12 +106,12 @@ namespace GRSHOP.Controllers
             {
                 try
                 {
-                    _context.Update(grocery);
+                    _context.Update(order);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!GroceryExists(grocery.Id))
+                    if (!OrderExists(order.Id))
                     {
                         return NotFound();
                     }
@@ -152,11 +122,12 @@ namespace GRSHOP.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(grocery);
+            ViewData["BrandId"] = new SelectList(_context.Brand, "Id", "Name", order.BrandId);
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
+            return View(order);
         }
 
-        // GET: Groceries/Delete/5
-        [Authorize]
+        // GET: Orders/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -164,30 +135,32 @@ namespace GRSHOP.Controllers
                 return NotFound();
             }
 
-            var grocery = await _context.Grocery
+            var order = await _context.Order
+                .Include(o => o.GroceryBrand)
+                .Include(o => o.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (grocery == null)
+            if (order == null)
             {
                 return NotFound();
             }
 
-            return View(grocery);
+            return View(order);
         }
 
-        // POST: Groceries/Delete/5
+        // POST: Orders/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var grocery = await _context.Grocery.FindAsync(id);
-            _context.Grocery.Remove(grocery);
+            var order = await _context.Order.FindAsync(id);
+            _context.Order.Remove(order);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool GroceryExists(int id)
+        private bool OrderExists(int id)
         {
-            return _context.Grocery.Any(e => e.Id == id);
+            return _context.Order.Any(e => e.Id == id);
         }
     }
 }

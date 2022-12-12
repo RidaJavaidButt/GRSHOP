@@ -14,5 +14,16 @@ namespace GRSHOP.Data
         {
         }
         public DbSet<GRSHOP.Models.Grocery> Grocery { get; set; }
+
+        public DbSet<GRSHOP.Models.Brand> Brand { get; set; }
+
+        public DbSet<GRSHOP.Models.Store> Store { get; set; }
+
+        public DbSet<GRSHOP.Models.Order> Order { get; set; }
+
+
+
+
+
     }
 }
